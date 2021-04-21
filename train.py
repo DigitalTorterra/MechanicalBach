@@ -14,7 +14,7 @@ metadata = pd.read_csv(path + 'maestro-v3.0.0.csv')
 
 notes = []
 
-print(metadata[metadata['year'] == 2018]['midi_filename'][0])
+# print(metadata[metadata['year'] == 2018]['midi_filename'][0])
 
 for filename in [metadata[metadata['year'] == 2018]['midi_filename'][0]]:
     file = path + filename
@@ -27,12 +27,13 @@ for filename in [metadata[metadata['year'] == 2018]['midi_filename'][0]]:
         if isinstance(element, note.Note):
             notes.append(str(element.pitch))
         elif isinstance(element, chord.Chord):
-            print(element)
             notes.append('.'.join(str(n) for n in element.normalOrder))
 
 sequence_length = 100
 
 pitchnames = sorted(set(item for item in notes))
+
+n_vocab = len(pitchnames)
 
 note_to_int = dict((note, number) for number, note in enumerate(pitchnames))
 
@@ -51,9 +52,10 @@ n_patterns = len(network_input)
 network_input = np.reshape(network_input, (n_patterns, sequence_length, 1))
 
 # normalize input
-network_input = network_input / float(n_patterns)
+network_input = network_input / float(n_vocab)
 
 network_output = to_categorical(network_output)
+print(network_output.shape)
 
 model = Sequential()
 model.add(LSTM(512, input_shape=(network_input.shape[1], network_input.shape[2]), return_sequences=True))
@@ -63,7 +65,7 @@ model.add(Dropout(0.3))
 model.add(LSTM(512))
 model.add(Dense(256, activation='relu'))
 model.add(Dropout(0.3))
-model.add(Dense(n_patterns, activation='softmax'))
+model.add(Dense(n_vocab, activation='softmax'))
 
 
 model.compile(loss='categorical_crossentropy', optimizer='rmsprop')
