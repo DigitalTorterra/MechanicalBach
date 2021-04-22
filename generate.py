@@ -13,8 +13,6 @@ metadata = pd.read_csv(path + 'maestro-v3.0.0.csv')
 
 notes = []
 
-# print(metadata[metadata['year'] == 2018]['midi_filename'][0])
-
 for filename in [metadata[metadata['year'] == 2018]['midi_filename'][0]]:
     file = path + filename
     midi = converter.parse(file)
@@ -70,8 +68,10 @@ model.add(Dense(n_vocab, activation='softmax'))
 
 model.compile(loss='categorical_crossentropy', optimizer='rmsprop')
 
+# loads weights
 model.load_weights('weights.hdf5')
 
+# random starting index
 start = np.random.randint(0, len(network_input)-1)
 
 int_to_note = dict((number, note) for number, note in enumerate(pitchnames))
@@ -79,8 +79,10 @@ pattern = network_input[start]
 
 prediction_output = []
 
-# generate 500 notes
-for note_index in range(500):
+
+nNotes = 500 # about 2 min
+# generate notes
+for note_index in range(nNotes):
     prediction_input = np.reshape(pattern, (1, len(pattern), 1))
     prediction_input = prediction_input / float(n_vocab)
     prediction = model.predict(prediction_input, verbose=0)
@@ -90,8 +92,8 @@ for note_index in range(500):
     pattern = np.append(pattern, index)
     pattern = pattern[1:len(pattern)]
 
-# turn predictions into notes
 
+# turn predictions into notes
 
 offset = 0
 output_notes = []
