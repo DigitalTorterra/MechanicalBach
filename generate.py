@@ -4,7 +4,6 @@ from music21 import converter, note, chord, instrument, stream
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, LSTM, Dropout
 from tensorflow.keras.utils import to_categorical
-from tensorflow.keras.callbacks import ModelCheckpoint
 
 # import data
 path = 'maestro-v3.0.0-midi/maestro-v3.0.0/'

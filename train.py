@@ -1,10 +1,10 @@
 import numpy as np
 import pandas as pd
-from music21 import converter, note, chord
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, LSTM, Dropout
 from tensorflow.keras.utils import to_categorical
 from tensorflow.keras.callbacks import ModelCheckpoint
+import pickle
 
 
 # import data
@@ -16,21 +16,12 @@ notes = []
 
 
 nSongs = len(metadata.index)
-# to do: add in offset
-for i, filename in enumerate(metadata['midi_filename']):
-    file = path + filename
-    midi = converter.parse(file)
 
-    notes_to_parse = midi.flat.notes
+# import data from list
+listFile = 'list.txt'
+with open(listFile, 'rb') as f:
+    notes = pickle.load(f)
 
-    for element in notes_to_parse:
-        if isinstance(element, note.Note):
-            notes.append(str(element.pitch))
-        elif isinstance(element, chord.Chord):
-            notes.append('.'.join(str(n) for n in element.normalOrder))
-    
-    if (i%10 == 0):
-        print(f'{i} songs done out of {nSongs}')
 
 sequence_length = 100
 
