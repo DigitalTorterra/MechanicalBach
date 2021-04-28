@@ -1,0 +1,10 @@
+#!/bin/csh
+#$ -M pfaley@nd.edu
+#$ -m abe
+#$ -q long
+#$ -pe smp 8
+#$ -N DataDownload
+
+module load python
+
+python process_split.py
