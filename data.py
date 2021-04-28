@@ -4,7 +4,7 @@ import numpy as np
 
 
 # Constants
-DATA_PATH = 'list.txt'
+DATA_PATH = './data/list.txt'
 
 
 class MIDIDataset:
