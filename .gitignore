@@ -1,2 +1,4 @@
 maestro-v3.0.0-midi/
 .*.sw*
+weights/
+*.o*

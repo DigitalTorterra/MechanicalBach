@@ -15,7 +15,7 @@ def create_lstm(input_shape: Tuple[int, int],
                 num_hidden_dense: int = 1,
                 hidden_dense_size: int = 256,
                 hidden_dense_activation: str = 'relu',
-                loss_function: str = 'categorical_crossentropy',
+                loss_function: str = 'sparse_categorical_crossentropy',
                 optimizer: str = 'rmsprop'):
 
     # Initialize model
