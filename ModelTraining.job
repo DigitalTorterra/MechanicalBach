@@ -5,7 +5,7 @@
 #$ -pe smp 8
 #$ -q gpu@ta-titanv-001.crc.nd.edu
 #$ -l gpu_card=1
-#$ -N CNNHadamard
+#$ -N MechanicalBach
 
 module load python
 module load tensorflow

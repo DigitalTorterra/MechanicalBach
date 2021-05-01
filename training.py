@@ -1,5 +1,6 @@
 # External imports
 import argparse
+from tensorflow.keras.callbacks import ModelCheckpoint
 
 # Internal imports
 import data
@@ -20,9 +21,9 @@ if __name__ == "__main__":
     parser.add_argument('-o', '--optimizer', help='Optimizer to use', default='rmsprop')
     parser.add_argument('-b', '--batch_size', help='Batch size', type=int, default=64)
     parser.add_argument('-e', '--epochs', help='Number of epochs', type=int, default=200)
-    parser.add_argument('-d', '--data_mode', help=f'How to encode the MIDI data', choices=DATA_MODES default='Numeric')
+    parser.add_argument('-d', '--data_mode', help=f'How to encode the MIDI data', choices=DATA_MODES, default='Numeric')
     parser.add_argument('-s', '--seq_len', help='Length of input sequence to model', type=int, default=100)
-    parser.add_argument('-d', '--data_path', help='Path to training data', default='./data/train.pkl')
+    parser.add_argument('-p', '--data_path', help='Path to training data', default='./data/train.pkl')
     parser.add_argument('-w', '--weights_path', help='Path to directory to store weights', default='./weights/')
 
     # LSTM-Specific Arguments
@@ -39,7 +40,8 @@ if __name__ == "__main__":
 
     # Initialize dataset
     if args.data_mode == 'Numeric':
-        dataset = MIDINumericDataset(path=args.data_path, sequence_len=args.seq_len)
+        dataset = data.MIDINumericDataset(path=args.data_path, sequence_len=args.seq_len)
+        out_shape = 1
 
 
     # Preprocess data
@@ -47,16 +49,16 @@ if __name__ == "__main__":
 
     # Create model
     if args.model_type == 'LSTM':
-        model = create_lstm(network_input[0].shape,
-                            network_output[0].shape,
-                            lstm_size = args.lstm_size,
-                            num_lstm_layers = args.lstm_num_layers,
-                            dropout_prob = args.lstm_dropout_prob,
-                            num_hidden_dense = args.lstm_num_hidden_dense,
-                            hidden_dense_size = args.lstm_hidden_dense_size,
-                            hidden_dense_activation = args.lstm_hidden_dense_activation
-                            loss_function = args.loss_function,
-                            optimizer = args.optimizer)
+        model = models.create_lstm(network_input[0].shape,
+                                   out_shape,
+                                   lstm_size = args.lstm_size,
+                                   num_lstm_layers = args.lstm_num_layers,
+                                   dropout_prob = args.lstm_dropout_prob,
+                                   num_hidden_dense = args.lstm_num_hidden_dense,
+                                   hidden_dense_size = args.lstm_hidden_dense_size,
+                                   hidden_dense_activation = args.lstm_hidden_dense_activation,
+                                   loss_function = args.loss_function,
+                                   optimizer = args.optimizer)
 
 
     # Setup training checkpoints
