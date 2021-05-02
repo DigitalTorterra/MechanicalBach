@@ -87,13 +87,14 @@ class MIDINumericDataset(MIDIDataset):
 
         # Resize data
         n_patterns = len(network_input)
-        network_input = np.reshape(network_input, (n_patterns, self.sequence_len, 1))
+        #network_input = np.reshape(network_input, (n_patterns, self.sequence_len, 1))
 
         # Normalize input
-        network_input = network_input / float(self.n_vocab)
+        network_input = np.array(network_input) / float(self.n_vocab)
 
         # Transform output
-        network_output = np.array(network_output) / float(self.n_vocab)
+        # network_output = np.array(network_output) / float(self.n_vocab)
+        network_output = np.array(network_output)
 
         return network_input, network_output
 
