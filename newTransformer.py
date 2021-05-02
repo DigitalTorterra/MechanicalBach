@@ -112,13 +112,8 @@ if __name__ == "__main__":
 
     # Setup training checkpoints
     filepath = f'{args.weights_path}{args.name}' + '-{epoch:02d}-{loss:.4f}.hdf5'
-    checkpoint = ModelCheckpoint(
-        filepath, monitor='loss',
-        verbose=0,
-        save_best_only=True,
-        mode='min'
-    )
-    callbacks_list = [checkpoint]
 
     # Train the model
-    model.fit(network_input, network_output, epochs=args.epochs, batch_size=args.batch_size, callbacks=callbacks_list)
+    model.fit(network_input, network_output, epochs=args.epochs, batch_size=args.batch_size)
+
+    model.save(transModel)
