@@ -41,9 +41,21 @@ class TokenAndPositionEmbedding(layers.Layer):
         return x + positions
 
 
+def load_from_dict(in_dict):
+    """
+    This function loads an arbitrary model from a dict
+    """
+    # Get model name
+    model_type = in_dict.pop(model_type)
 
-def create_lstm(input_shape: Tuple[int, int],
-                out_size: int,
+    # Load LSTM
+    if model_type == 'LSTM':
+        create_lstm(**in_dict)
+
+
+
+def create_lstm(input_shape: Tuple[int, int] = (100, 1),
+                out_size: int = 100,
                 lstm_size: int =  512,
                 num_lstm_layers: int = 3,
                 dropout_prob: float = None,
@@ -52,6 +64,21 @@ def create_lstm(input_shape: Tuple[int, int],
                 hidden_dense_activation: str = 'relu',
                 loss_function: str = 'sparse_categorical_crossentropy',
                 optimizer: str = 'rmsprop'):
+
+    # Save arguments
+    args = {
+        'model_type': 'lstm',
+        'input_shape': input_shape,
+        'out_size': out_size,
+        'lstm_size': lstm_size,
+        'num_lstm_layers': num_lstm_layers,
+        'dropout_prob': dropout_prob,
+        'num_hidden_dense': num_hidden_dense,
+        'hidden_dense_size': hidden_dense_size,
+        'hidden_dense_activation': hidden_dense_activation,
+        'loss_function': loss_function,
+        'optimizer': optimizer,
+    }
 
     # Initialize model
     model = Sequential()
@@ -79,7 +106,7 @@ def create_lstm(input_shape: Tuple[int, int],
     # Compile model
     model.compile(loss=loss_function, optimizer=optimizer)
 
-    return model
+    return model, args
 
 def create_transformer(input_length: int,
             n_vocab: int,

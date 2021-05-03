@@ -1,5 +1,6 @@
 # External imports
 import argparse
+import json
 from tensorflow.keras.callbacks import ModelCheckpoint
 import numpy as np
 
@@ -18,12 +19,12 @@ if __name__ == "__main__":
     # General arguments
     parser.add_argument('-m', '--model_type', help=f'Model Type', choices=MODEL_LIST, required=True)
     parser.add_argument('-n', '--name', help='Experiment name', required=True)
-    parser.add_argument('-l', '--loss_function', help='Loss function to use', default='sparse_categorical_crossentropy')
+    parser.add_argument('-l', '--loss_function', help='Loss function to use', default='categorical_crossentropy')
     parser.add_argument('-o', '--optimizer', help='Optimizer to use', default='rmsprop')
     parser.add_argument('-b', '--batch_size', help='Batch size', type=int, default=64)
     parser.add_argument('-e', '--epochs', help='Number of epochs', type=int, default=10)
     parser.add_argument('-d', '--data_mode', help=f'How to encode the MIDI data', choices=DATA_MODES, default='Numeric')
-    parser.add_argument('-s', '--seq_len', help='Length of input sequence to model', type=int, default=100)
+    parser.add_argument('-s', '--seq_len', help='Length of input sequence to model', type=int, default=50)
     parser.add_argument('-p', '--data_path', help='Path to training data', default='./data/train.pkl')
     parser.add_argument('-w', '--weights_path', help='Path to directory to store weights', default='./weights/')
 
@@ -51,6 +52,7 @@ if __name__ == "__main__":
     # Initialize dataset
     if args.data_mode == 'Numeric':
         dataset = data.MIDINumericDataset(path=args.data_path, sequence_len=args.seq_len)
+        out_shape = dataset.n_vocab
 
 
     # Preprocess data
@@ -63,8 +65,9 @@ if __name__ == "__main__":
         network_input = np.reshape(network_input, (n_patterns, args.seq_len, 1))
         network_input = np.array(network_input) / float(n_vocab)
         network_output = np.array(network_output)
+        in_shape = (network_input.shape[1], network_input.shape[2])
 
-        model = models.create_lstm(network_input[0].shape,
+        model = models.create_lstm(in_shape,
                                    n_vocab,
                                    lstm_size = args.lstm_size,
                                    num_lstm_layers = args.lstm_num_layers,
@@ -84,6 +87,12 @@ if __name__ == "__main__":
             mode='min'
         )
         callbacks_list = [checkpoint]
+
+        # Save args
+        with open(argpath, 'w') as f:
+            json.dump(hparams, f)
+
+        print(model.summary())
 
         # Train the model
         model.fit(network_input, network_output, epochs=args.epochs, batch_size=args.batch_size, callbacks=callbacks_list)

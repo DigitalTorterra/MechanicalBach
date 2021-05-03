@@ -6,7 +6,7 @@ from tensorflow.keras.layers import Dense, LSTM, Dropout
 from tensorflow.keras.utils import to_categorical
 
 # import data
-path = 'maestro-v3.0.0-midi/maestro-v3.0.0/'
+path = '../maestro-v3.0.0/'
 
 metadata = pd.read_csv(path + 'maestro-v3.0.0.csv')
 
@@ -68,7 +68,7 @@ model.add(Dense(n_vocab, activation='softmax'))
 model.compile(loss='categorical_crossentropy', optimizer='rmsprop')
 
 # loads weights
-model.load_weights('weights.hdf5')
+model.load_weights('../weights/lstm_initial-01-4.6047.hdf5')
 
 # random starting index
 start = np.random.randint(0, len(network_input)-1)
