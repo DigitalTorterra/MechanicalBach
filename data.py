@@ -90,14 +90,14 @@ class MIDINumericDataset(MIDIDataset):
             network_output.append(self.note_to_int[sequence_out])
 
         # Resize data
-        n_patterns = len(network_input)
-        network_input = np.reshape(network_input, (n_patterns, self.sequence_len, 1))
+        #n_patterns = len(network_input)
+        #network_input = np.reshape(network_input, (n_patterns, self.sequence_len, 1))
 
         # Normalize input
         network_input = network_input / float(self.n_vocab)
 
         # Transform output
-        network_output = to_categorical(network_output, num_classes=self.n_vocab, dtype=network_input.dtype)
+        # network_output = to_categorical(network_output, num_classes=self.n_vocab, dtype=network_input.dtype)
 
         return network_input, network_output
 
