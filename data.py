@@ -2,26 +2,30 @@
 import pickle as pkl
 import numpy as np
 from sklearn.preprocessing import OneHotEncoder
+from tensorflow.keras.utils import to_categorical
 
 
 # Constants
 DATA_PATH = './data/list.txt'
+REF_PATH  = './data/list.txt'
 
 
 class MIDIDataset:
     """
     This class is the base class for reading MIDI data
     """
-    def __init__(self, path: str = DATA_PATH):
+    def __init__(self, path: str = DATA_PATH, ref_path: str = REF_PATH):
 
         # Save inputs
         self.path = path
+        self.ref_path = ref_path
 
         # Load the pickled notes
         self.notes = self.load_pickle(path)
+        self.ref_notes = self.load_pickle(path)
 
         # Extract relevant metadata
-        self.pitchnames, self.n_vocab = self.get_pitch_metadata(self.notes)
+        self.pitchnames, self.n_vocab = self.get_pitch_metadata(self.ref_notes)
         self.note_to_int = self.construct_note_dict(self.pitchnames)
 
         # Convert to NN form (placeholder)
@@ -60,12 +64,12 @@ class MIDINumericDataset(MIDIDataset):
     This class extends `MIDIDataset` to represent each note as a scalar from
     0 to 1
     """
-    def __init__(self, path: str = DATA_PATH, sequence_len: int = 100):
+    def __init__(self, path: str = DATA_PATH, ref_path: str = REF_PATH, sequence_len: int = 100):
         # Save params
         self.sequence_len = sequence_len
 
         # Initialize base class
-        super().__init__(path=path)
+        super().__init__(path=path, ref_path=ref_path)
 
 
     def construct_data(self):
@@ -93,8 +97,11 @@ class MIDINumericDataset(MIDIDataset):
         network_input = np.array(network_input) / float(self.n_vocab)
 
         # Transform output
+
         # network_output = np.array(network_output) / float(self.n_vocab)
         network_output = np.array(network_output)
+
+        # network_output = to_categorical(network_output, num_classes=self.n_vocab, dtype=network_input.dtype)
 
         return network_input, network_output
 
