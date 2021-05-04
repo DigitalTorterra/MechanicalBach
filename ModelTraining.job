@@ -10,4 +10,5 @@
 module load python
 module load tensorflow
 
-python training.py -m LSTM -n lstm_embed --lstm_dropout_prob 0.3 --lstm_embedding_size 64
+python training.py -m LSTM -n lstm_embed --lstm_dropout_prob 0.3
+ # --lstm_embedding_size 64

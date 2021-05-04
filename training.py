@@ -19,7 +19,7 @@ if __name__ == "__main__":
     # General arguments
     parser.add_argument('-m', '--model_type', help=f'Model Type', choices=MODEL_LIST, required=True)
     parser.add_argument('-n', '--name', help='Experiment name', required=True)
-    parser.add_argument('-l', '--loss_function', help='Loss function to use', default='categorical_crossentropy')
+    parser.add_argument('-l', '--loss_function', help='Loss function to use', default='sparse_categorical_crossentropy')
     parser.add_argument('-o', '--optimizer', help='Optimizer to use', default='rmsprop')
     parser.add_argument('-b', '--batch_size', help='Batch size', type=int, default=64)
     parser.add_argument('-e', '--epochs', help='Number of epochs', type=int, default=10)
@@ -54,7 +54,7 @@ if __name__ == "__main__":
     # Initialize dataset
     if args.data_mode == 'Numeric':
         normalize_in = args.model_type == 'LSTM' and args.lstm_embedding_size == None
-        dataset = data.MIDINumericDataset(path=args.data_path, sequence_len=args.seq_len, normalize_in=normalize_in)
+        dataset = data.MIDINumericDataset(path=args.data_path, sequence_len=args.seq_len, normalize_in=normalize_in, onehot_out=False)
         out_shape = dataset.n_vocab
 
     print('b')
@@ -99,7 +99,7 @@ if __name__ == "__main__":
         print('d')
         
         # Setup training checkpoints
-        filepath = f'{args.weights_path}{args.name}' + '-{epoch:02d}-{loss:.4f}.hdf5'
+        filepath = f'{args.weights_path}{args.name}.hdf5'
         checkpoint = ModelCheckpoint(
             filepath, monitor='loss',
             verbose=0,
