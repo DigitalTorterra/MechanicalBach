@@ -22,7 +22,7 @@ class MIDIDataset:
 
         # Load the pickled notes
         self.notes = self.load_pickle(path)
-        self.ref_notes = self.load_pickle(path)
+        self.ref_notes = self.load_pickle(ref_path)
 
         # Extract relevant metadata
         self.pitchnames, self.n_vocab = self.get_pitch_metadata(self.ref_notes)
@@ -43,6 +43,7 @@ class MIDIDataset:
         # This function returns a set of pitch-related metadata
         pitchnames = list(sorted(set(notes)))
         n_vocab = len(pitchnames)
+        print(f'n_vocab: {n_vocab}')
 
         return pitchnames, n_vocab
 
@@ -64,9 +65,11 @@ class MIDINumericDataset(MIDIDataset):
     This class extends `MIDIDataset` to represent each note as a scalar from
     0 to 1
     """
-    def __init__(self, path: str = DATA_PATH, ref_path: str = REF_PATH, sequence_len: int = 100):
+    def __init__(self, path: str = DATA_PATH, ref_path: str = REF_PATH, sequence_len: int = 100, normalize_in: bool = True, onehot_out: bool = True):
         # Save params
         self.sequence_len = sequence_len
+        self.normalize_in = normalize_in
+        self.onehot_out = onehot_out
 
         # Initialize base class
         super().__init__(path=path, ref_path=ref_path)
@@ -89,18 +92,21 @@ class MIDINumericDataset(MIDIDataset):
             network_input.append([self.note_to_int[n] for n in sequence_in])
             network_output.append(self.note_to_int[sequence_out])
 
-        # Resize data
-        #n_patterns = len(network_input)
-        #network_input = np.reshape(network_input, (n_patterns, self.sequence_len, 1))
+        # Resize data- done in training b/c transformer does not need resized data
+        # n_patterns = len(network_input)
+        # network_input = np.reshape(network_input, (n_patterns, self.sequence_len, 1))
 
-        # Normalize input
-        network_input = np.array(network_input) / float(self.n_vocab)
+        # Normalize input- done in if statement below
+        # network_input = np.array(network_input) / float(self.n_vocab)
         print(network_input.shape)
 
         network_output = np.array(network_output)
+        if self.normalize_in:
+            network_input = network_input / float(self.n_vocab)
 
         # Transform output
-        # network_output = to_categorical(network_output, num_classes=self.n_vocab, dtype=network_input.dtype)
+        if self.onehot_out:
+            network_output = to_categorical(network_output, num_classes=self.n_vocab, dtype=network_input.dtype)
 
         return network_input, network_output
 

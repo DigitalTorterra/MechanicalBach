@@ -3,7 +3,7 @@ import tensorflow as tf
 from tensorflow import keras
 from typing import Tuple
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, LSTM, Dropout
+from tensorflow.keras.layers import Dense, LSTM, Dropout, Embedding
 from tensorflow.keras import layers
 
 # Defining layers for Transformer
@@ -46,16 +46,19 @@ def load_from_dict(in_dict):
     This function loads an arbitrary model from a dict
     """
     # Get model name
-    model_type = in_dict.pop(model_type)
+    model_type = in_dict.pop('model_type')
 
     # Load LSTM
-    if model_type == 'LSTM':
-        create_lstm(**in_dict)
+    if model_type == 'lstm':
+        return create_lstm(**in_dict)
 
 
 
 def create_lstm(input_shape: Tuple[int, int] = (100, 1),
                 out_size: int = 100,
+                embedding_in_size: int = None,
+                embedding_out_size: int = None,
+                embedding_seq_len: int = None,
                 lstm_size: int =  512,
                 num_lstm_layers: int = 3,
                 dropout_prob: float = None,
@@ -70,6 +73,9 @@ def create_lstm(input_shape: Tuple[int, int] = (100, 1),
         'model_type': 'lstm',
         'input_shape': input_shape,
         'out_size': out_size,
+        'embedding_in_size': embedding_in_size,
+        'embedding_out_size': embedding_out_size,
+        'embedding_seq_len': embedding_seq_len,
         'lstm_size': lstm_size,
         'num_lstm_layers': num_lstm_layers,
         'dropout_prob': dropout_prob,
@@ -83,8 +89,12 @@ def create_lstm(input_shape: Tuple[int, int] = (100, 1),
     # Initialize model
     model = Sequential()
 
-    # Add initial LSTM layer
-    model.add(LSTM(lstm_size, input_shape=input_shape, return_sequences=True))
+    if embedding_in_size != None and embedding_out_size != None and embedding_seq_len != None:
+        model.add(Embedding(embedding_in_size, embedding_out_size, input_length=embedding_seq_len))
+        model.add(LSTM(lstm_size, return_sequences=True))
+    else:
+        # Add initial LSTM layer
+        model.add(LSTM(lstm_size, input_shape=input_shape, return_sequences=True))
 
     # Add subsequent LSTM layers and dropout if necessary
     for i in range(num_lstm_layers-1):

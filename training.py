@@ -35,6 +35,7 @@ if __name__ == "__main__":
     parser.add_argument('--lstm_num_hidden_dense', help='Number of hidden dense layers', type=int, default=1)
     parser.add_argument('--lstm_hidden_dense_size', help='Size of hidden denses layers', type=int, default=256)
     parser.add_argument('--lstm_hidden_dense_activation', help='Activation for hidden dense layers', default='relu')
+    parser.add_argument('--lstm_embedding_size', help='Included embedding layer size', type=int)
 
     # Transformer-Specific Arguments
     parser.add_argument('--embed_dim', help='Embedding size for each token', type=int, default=32)
@@ -48,16 +49,20 @@ if __name__ == "__main__":
     # Parse arguments
     args = parser.parse_args()
 
+    print('a')
 
     # Initialize dataset
     if args.data_mode == 'Numeric':
-        dataset = data.MIDINumericDataset(path=args.data_path, sequence_len=args.seq_len)
+        normalize_in = args.model_type == 'LSTM' and args.lstm_embedding_size == None
+        dataset = data.MIDINumericDataset(path=args.data_path, sequence_len=args.seq_len, normalize_in=normalize_in)
         out_shape = dataset.n_vocab
+
+    print('b')
 
 
     # Preprocess data
     network_input, network_output = dataset.get_data()
-    pitchnames, n_vocab = dataset.get_pitch_metadata(dataset.notes)
+    pitchnames, n_vocab = dataset.pitchnames, dataset.n_vocab
 
     # Create model
     if args.model_type == 'LSTM':
@@ -67,16 +72,31 @@ if __name__ == "__main__":
         network_output = np.array(network_output)
         in_shape = (network_input.shape[1], network_input.shape[2])
 
-        model = models.create_lstm(in_shape,
-                                   n_vocab,
-                                   lstm_size = args.lstm_size,
-                                   num_lstm_layers = args.lstm_num_layers,
-                                   dropout_prob = args.lstm_dropout_prob,
-                                   num_hidden_dense = args.lstm_num_hidden_dense,
-                                   hidden_dense_size = args.lstm_hidden_dense_size,
-                                   hidden_dense_activation = args.lstm_hidden_dense_activation,
-                                   loss_function = args.loss_function,
-                                   optimizer = args.optimizer)
+        if args.lstm_embedding_size != None:
+            embedding_in_size = out_shape
+            embedding_out_size = args.lstm_embedding_size
+            embedding_seq_len = args.seq_len
+        else:
+            embedding_in_size = None
+            embedding_out_size = None
+            embedding_seq_len = None
+
+        print('c')
+
+        model, hparams = models.create_lstm(input_shape = in_shape,
+                                            out_size = n_vocab,
+                                            embedding_in_size = embedding_in_size,
+                                            embedding_out_size = embedding_out_size,
+                                            embedding_seq_len = embedding_seq_len,
+                                            lstm_size = args.lstm_size,
+                                            num_lstm_layers = args.lstm_num_layers,
+                                            dropout_prob = args.lstm_dropout_prob,
+                                            num_hidden_dense = args.lstm_num_hidden_dense,
+                                            hidden_dense_size = args.lstm_hidden_dense_size,
+                                            hidden_dense_activation = args.lstm_hidden_dense_activation,
+                                            loss_function = args.loss_function,
+                                            optimizer = args.optimizer)
+        print('d')
         
         # Setup training checkpoints
         filepath = f'{args.weights_path}{args.name}' + '-{epoch:02d}-{loss:.4f}.hdf5'
@@ -89,10 +109,13 @@ if __name__ == "__main__":
         callbacks_list = [checkpoint]
 
         # Save args
-        with open(argpath, 'w') as f:
+        hparam_path = f'{args.weights_path}{args.name}.json'
+        with open(hparam_path, 'w') as f:
             json.dump(hparams, f)
 
         print(model.summary())
+
+        print('e')
 
         # Train the model
         model.fit(network_input, network_output, epochs=args.epochs, batch_size=args.batch_size, callbacks=callbacks_list)
