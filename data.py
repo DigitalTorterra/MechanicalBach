@@ -65,10 +65,11 @@ class MIDINumericDataset(MIDIDataset):
     This class extends `MIDIDataset` to represent each note as a scalar from
     0 to 1
     """
-    def __init__(self, path: str = DATA_PATH, ref_path: str = REF_PATH, sequence_len: int = 100, normalize_in: bool = True):
+    def __init__(self, path: str = DATA_PATH, ref_path: str = REF_PATH, sequence_len: int = 100, normalize_in: bool = True, onehot_out: bool = True):
         # Save params
         self.sequence_len = sequence_len
         self.normalize_in = normalize_in
+        self.onehot_out = onehot_out
 
         # Initialize base class
         super().__init__(path=path, ref_path=ref_path)
@@ -100,7 +101,8 @@ class MIDINumericDataset(MIDIDataset):
             network_input = network_input / float(self.n_vocab)
 
         # Transform output
-        network_output = to_categorical(network_output, num_classes=self.n_vocab, dtype=network_input.dtype)
+        if self.onehot_out:
+            network_output = to_categorical(network_output, num_classes=self.n_vocab, dtype=network_input.dtype)
 
         return network_input, network_output
 
