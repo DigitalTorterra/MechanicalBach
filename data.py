@@ -94,7 +94,10 @@ class MIDINumericDataset(MIDIDataset):
         #network_input = np.reshape(network_input, (n_patterns, self.sequence_len, 1))
 
         # Normalize input
-        network_input = network_input / float(self.n_vocab)
+        network_input = np.array(network_input) / float(self.n_vocab)
+        print(network_input.shape)
+
+        network_output = np.array(network_output)
 
         # Transform output
         # network_output = to_categorical(network_output, num_classes=self.n_vocab, dtype=network_input.dtype)
