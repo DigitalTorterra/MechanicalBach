@@ -1,5 +1,6 @@
 # External imports
 import argparse
+import json
 import numpy as np
 from tensorflow.keras.callbacks import ModelCheckpoint
 from music21 import converter, note, chord, instrument, stream
@@ -24,8 +25,8 @@ if __name__ == "__main__":
     parser.add_argument('-b', '--batch_size', help='Batch size', type=int, default=64)
     parser.add_argument('-e', '--epochs', help='Number of epochs', type=int, default=200)
     parser.add_argument('-d', '--data_mode', help=f'How to encode the MIDI data', choices=DATA_MODES, default='Numeric')
-    parser.add_argument('-s', '--seq_len', help='Length of input sequence to model', type=int, default=100)
-    parser.add_argument('-p', '--data_path', help='Path to training data', default='./data/val.pkl')
+    parser.add_argument('-s', '--seq_len', help='Length of input sequence to model', type=int, default=50)
+    parser.add_argument('-p', '--data_path', help='Path to training data', default='./data/train.pkl')
     parser.add_argument('-w', '--weights_path', help='Path to directory to store weights', default='./weights/')
 
     # LSTM-Specific Arguments
@@ -42,7 +43,7 @@ if __name__ == "__main__":
 
     # Initialize dataset
     if args.data_mode == 'Numeric':
-        dataset = data.MIDINumericDataset(path=args.data_path, sequence_len=args.seq_len)
+        dataset = data.MIDINumericDataset(path=args.data_path, ref_path=args.data_path, sequence_len=args.seq_len)
         out_shape = 1
 
 
@@ -50,21 +51,26 @@ if __name__ == "__main__":
     network_input, network_output = dataset.get_data()
 
     # Create model
+    model_path = './weights/lstm_initial_args.json'
+    with open(model_path, 'r') as f:
+        model_hparams = json.load(f)
     if args.model_type == 'LSTM':
-        model = models.create_lstm(network_input[0].shape,
-                                   out_shape,
-                                   lstm_size = args.lstm_size,
-                                   num_lstm_layers = args.lstm_num_layers,
-                                   dropout_prob = args.lstm_dropout_prob,
-                                   num_hidden_dense = args.lstm_num_hidden_dense,
-                                   hidden_dense_size = args.lstm_hidden_dense_size,
-                                   hidden_dense_activation = args.lstm_hidden_dense_activation,
-                                   loss_function = args.loss_function,
-                                   optimizer = args.optimizer)
+        model, _ = models.load_from_dict(model_hparams)
+        # mo
+        # model = models.create_lstm(network_input[0].shape,
+        #                            out_shape,
+        #                            lstm_size = args.lstm_size,
+        #                            num_lstm_layers = args.lstm_num_layers,
+        #                            dropout_prob = args.lstm_dropout_prob,
+        #                            num_hidden_dense = args.lstm_num_hidden_dense,
+        #                            hidden_dense_size = args.lstm_hidden_dense_size,
+        #                            hidden_dense_activation = args.lstm_hidden_dense_activation,
+        #                            loss_function = args.loss_function,
+        #                            optimizer = args.optimizer)
 
 
     # Load weights
-    filepath = './weights/lstm_initial-01-4.6047.hdf5'
+    filepath = './weights/lstm_initial-01-4.8798.hdf5'
     model.load_weights(filepath)
 
     # Choose a starting point
@@ -89,6 +95,7 @@ if __name__ == "__main__":
         p = prediction.squeeze()
         print(f'Prediction: {prediction.shape}')
         print(f'p: {p.shape}')
+        print(f'n_vocab: {dataset.n_vocab}')
         index = int(np.random.choice(dataset.n_vocab, 1, p=p/p.sum()))
 
         # Convert prediction to note
