@@ -51,6 +51,8 @@ def load_from_dict(in_dict):
     # Load LSTM
     if model_type == 'lstm':
         return create_lstm(**in_dict)
+    elif model_type == 'transformer':
+        return create_transformer(**in_dict)
 
 
 
@@ -129,6 +131,22 @@ def create_transformer(input_length: int,
             hidden_dense_activation: str = 'relu',
             loss_function: str = 'sparse_categorical_crossentropy',
             optimizer: str = 'adam'):
+
+        # Save arguments
+    args = {
+        'model_type': 'transformer',
+        'input_length': input_length,
+        'n_vocab': n_vocab,
+        'embed_dim': embed_dim,
+        'num_heads': num_heads,
+        'ff_dim': ff_dim,
+        'dropout_prob': dropout_prob,
+        'num_hidden_dense': num_hidden_dense,
+        'hidden_dense_size': hidden_dense_size,
+        'hidden_dense_activation': hidden_dense_activation,
+        'loss_function': loss_function,
+        'optimizer': optimizer,
+    }
     
     inputs = layers.Input(shape=(input_length,))
     embedding_layer = TokenAndPositionEmbedding(input_length, n_vocab, embed_dim)
@@ -151,4 +169,4 @@ def create_transformer(input_length: int,
 
     model.compile(optimizer=optimizer, loss=loss_function)
 
-    return model
+    return model, args

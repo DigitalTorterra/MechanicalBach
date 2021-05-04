@@ -52,6 +52,7 @@ if __name__ == "__main__":
 
     # Create model
     model_path = './weights/lstm_initial_args.json'
+    
     with open(model_path, 'r') as f:
         model_hparams = json.load(f)
     if args.model_type == 'LSTM':
@@ -67,6 +68,9 @@ if __name__ == "__main__":
         #                            hidden_dense_activation = args.lstm_hidden_dense_activation,
         #                            loss_function = args.loss_function,
         #                            optimizer = args.optimizer)
+    
+    elif args.model_type == 'transformer':
+        model, _ = models.load_from_dict(model_hparams)
 
 
     # Load weights

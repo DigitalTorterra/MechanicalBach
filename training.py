@@ -121,7 +121,7 @@ if __name__ == "__main__":
         model.fit(network_input, network_output, epochs=args.epochs, batch_size=args.batch_size, callbacks=callbacks_list)
     
     elif args.model_type == 'transformer':
-        model = models.create_transformer(input_length = args.seq_len,
+        model, hparams = models.create_transformer(input_length = args.seq_len,
                                           n_vocab=n_vocab,
                                           embed_dim=args.embed_dim,
                                           num_heads=args.num_heads,
@@ -132,6 +132,11 @@ if __name__ == "__main__":
                                           hidden_dense_activation = args.transformer_hidden_dense_activation,
                                           loss_function = args.loss_function,
                                           optimizer = args.optimizer)
+        
+        # Save args
+        hparam_path = f'{args.weights_path}{args.name}.json'
+        with open(hparam_path, 'w') as f:
+            json.dump(hparams, f)
 
         # Train the model
         model.fit(network_input, network_output, epochs=args.epochs, batch_size=args.batch_size)
