@@ -140,6 +140,6 @@ if __name__ == "__main__":
 
         # Train the model
         model.fit(network_input, network_output, epochs=args.epochs, batch_size=args.batch_size)
-        filepath = f'{args.weights_path}{args.name}'
+        filepath = f'{args.weights_path}{args.name}.hdf5'
         model.save_weights(filepath)
 

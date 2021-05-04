@@ -98,6 +98,7 @@ class MIDINumericDataset(MIDIDataset):
 
         # Normalize input- done in if statement below
         # network_input = np.array(network_input) / float(self.n_vocab)
+        network_input = np.array(network_input)
         print(network_input.shape)
 
         network_output = np.array(network_output)
