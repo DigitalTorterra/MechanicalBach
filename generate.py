@@ -26,7 +26,7 @@ if __name__ == "__main__":
     parser.add_argument('-e', '--epochs', help='Number of epochs', type=int, default=200)
     parser.add_argument('-d', '--data_mode', help=f'How to encode the MIDI data', choices=DATA_MODES, default='Numeric')
     parser.add_argument('-s', '--seq_len', help='Length of input sequence to model', type=int, default=50)
-    parser.add_argument('-p', '--data_path', help='Path to training data', default='./data/train.pkl')
+    parser.add_argument('-p', '--data_path', help='Path to training data', default='./data/val.pkl')
     parser.add_argument('-w', '--weights_path', help='Path to directory to store weights', default='./weights/')
 
     # LSTM-Specific Arguments
@@ -43,7 +43,7 @@ if __name__ == "__main__":
 
     # Initialize dataset
     if args.data_mode == 'Numeric':
-        dataset = data.MIDINumericDataset(path=args.data_path, ref_path=args.data_path, sequence_len=args.seq_len)
+        dataset = data.MIDINumericDataset(path=args.data_path, sequence_len=args.seq_len)
         out_shape = 1
 
 
