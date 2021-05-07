@@ -7,9 +7,10 @@ import numpy as np
 # Internal imports
 import data
 import models
+import gan
 
 # Constants
-MODEL_LIST = ['LSTM', 'transformer']
+MODEL_LIST = ['LSTM', 'transformer', 'GAN']
 DATA_MODES = ['Numeric']
 
 if __name__ == "__main__":
@@ -46,18 +47,29 @@ if __name__ == "__main__":
     parser.add_argument('--transformer_hidden_dense_size', help='Size of hidden denses layers', type=int, default=256)
     parser.add_argument('--transformer_hidden_dense_activation', help='Activation for hidden dense layers', default='relu')
 
+    # GAN-Specific Arguments
+    parser.add_argument('--gan_latent_dims', help='Size of latent space', type=int, default=100)
+    parser.add_argument('--gan_num_dense_layers', help='Number of dense layers', type=int, default=1)
+    parser.add_argument('--gan_dense_hidden_size', help='Size of hidden layers', type=int, default=1000)
+    parser.add_argument('--gan_starting_num_channels', help='Number of channels in convolution', type=int, default=128)
+    parser.add_argument('--gan_activation', help='GAN activation function')
+    parser.add_argument('--gan_num_hidden_conv_layers', help='Number of hidden convolutional layers', type=int, default=3)
+    parser.add_argument('--gan_hidden_conv_num_channels', help='Number of channels for hidden convolutional channels', type=int, default=256)
+    parser.add_argument('--gan_dropout_prob', help='GAN dropout probability', type=float)
+
+
+
     # Parse arguments
     args = parser.parse_args()
 
-    print('a')
-
     # Initialize dataset
-    if args.data_mode == 'Numeric':
+    if args.data_mode == 'Numeric' and args.model_type != 'GAN':
         normalize_in = args.model_type == 'LSTM' and args.lstm_embedding_size == None
         dataset = data.MIDINumericDataset(path=args.data_path, sequence_len=args.seq_len, normalize_in=normalize_in, onehot_out=False)
         out_shape = dataset.n_vocab
 
-    print('b')
+    elif args.data_mode == 'Numeric' and args.model_type == 'GAN':
+        dataset = data.MIDIOnehotDataset(path=args.data_path, sequence_len=args.seq_len)
 
 
     # Preprocess data
@@ -143,3 +155,26 @@ if __name__ == "__main__":
         filepath = f'{args.weights_path}{args.name}.hdf5'
         model.save_weights(filepath)
 
+
+    elif args.model_type == 'GAN':
+        gen, dis, gan_model, hparams = models.create_gan(latent_dim = args.gan_latent_dims,
+                                            num_dense_layers = args.gan_num_dense_layers,
+                                            dense_hidden_size = args.gan_dense_hidden_size,
+                                            starting_num_channels = args.gan_starting_num_channels,
+                                            activation = args.gan_activation,
+                                            num_hidden_conv_layers = args.gan_num_hidden_conv_layers,
+                                            hidden_conv_num_channels = args.gan_hidden_conv_num_channels,
+                                            n_vocab = dataset.n_vocab,
+                                            input_length = dataset.sequence_len,
+                                            disc_drop_prob = args.gan_dropout_prob,
+                                            loss_function = args.loss_function,
+                                            optimizer = args.optimizer)
+
+        # Save args
+        hparam_path = f'{args.weights_path}{args.name}.json'
+        with open(hparam_path, 'w') as f:
+            json.dump(hparams, f)
+
+        # Train model
+        gan.train_gan(gen, dis, gan_model, dataset, latent_dims=args.gan_latent_dims, n_epochs=args.epochs,
+                      batch_size=args.batch_size, base_path=args.weights_path, test_name=args.name)
