@@ -99,7 +99,7 @@ def create_lstm(input_shape: Tuple[int, int] = (100, 1),
         model.add(LSTM(lstm_size, return_sequences=True))
     else:
         # Add initial LSTM layer
-        model.add(LSTM(lstm_size, input_shape=input_shape, return_sequences=True))
+        model.add(LSTM(lstm_size, input_shape=input_shape, return_sequences=(num_lstm_layers != 1)))
 
     # Add subsequent LSTM layers and dropout if necessary
     for i in range(num_lstm_layers-1):
@@ -150,7 +150,7 @@ def create_transformer(input_length: int,
         'loss_function': loss_function,
         'optimizer': optimizer,
     }
-    
+
     inputs = layers.Input(shape=(input_length,))
     embedding_layer = TokenAndPositionEmbedding(input_length, n_vocab, embed_dim)
     x = embedding_layer(inputs)
@@ -162,7 +162,7 @@ def create_transformer(input_length: int,
     for _ in range(num_hidden_dense):
         if dropout_prob != None:
             x = layers.Dropout(dropout_prob)(x)
-        
+
         x = layers.Dense(hidden_dense_size, activation=hidden_dense_activation)(x)
 
     # add final layer
