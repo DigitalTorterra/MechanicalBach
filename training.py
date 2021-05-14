@@ -1,7 +1,7 @@
 # External imports
 import argparse
 import json
-from tensorflow.keras.callbacks import ModelCheckpoint
+from tensorflow.keras.callbacks import ModelCheckpoint, TensorBoard
 import numpy as np
 
 # Internal imports
@@ -28,6 +28,7 @@ if __name__ == "__main__":
     parser.add_argument('-s', '--seq_len', help='Length of input sequence to model', type=int, default=50)
     parser.add_argument('-p', '--data_path', help='Path to training data', default='./data/train.pkl')
     parser.add_argument('-w', '--weights_path', help='Path to directory to store weights', default='./weights/')
+    parser.add_argument('-t', '--tensorboard_dir', help='TensorBoard log path', default='./logs/')
 
     # LSTM-Specific Arguments
     parser.add_argument('--lstm_size', help='Size of LSTM layers', type=int, default=512)
@@ -76,6 +77,10 @@ if __name__ == "__main__":
     network_input, network_output = dataset.get_data()
     pitchnames, n_vocab = dataset.pitchnames, dataset.n_vocab
 
+    # Initialize tensorboard
+    if args.tensorboard_dir != None:
+        tensorboard = TensorBoard(log_dir=f'{args.tensorboard_dir}{args.name}', update_freq='batch')
+
     # Create model
     if args.model_type == 'LSTM':
         n_patterns = len(network_input)
@@ -119,6 +124,8 @@ if __name__ == "__main__":
             mode='min'
         )
         callbacks_list = [checkpoint]
+        if args.tensorboard_dir != None:
+            callbacks_list.append(tensorboard)
 
         # Save args
         hparam_path = f'{args.weights_path}{args.name}.json'
@@ -150,8 +157,13 @@ if __name__ == "__main__":
         with open(hparam_path, 'w') as f:
             json.dump(hparams, f)
 
+
+        # Load tensorboard
+        callbacks = [tensorboard] if args.tensorboard_dir != None else None
+
+
         # Train the model
-        model.fit(network_input, network_output, epochs=args.epochs, batch_size=args.batch_size)
+        model.fit(network_input, network_output, epochs=args.epochs, batch_size=args.batch_size, callbacks=callbacks)
         filepath = f'{args.weights_path}{args.name}.hdf5'
         model.save_weights(filepath)
 
@@ -174,7 +186,10 @@ if __name__ == "__main__":
         hparam_path = f'{args.weights_path}{args.name}.json'
         with open(hparam_path, 'w') as f:
             json.dump(hparams, f)
+        #
+        # Load tensorboard
+        callbacks = [tensorboard] if args.tensorboard_dir != None else None
 
         # Train model
         gan.train_gan(gen, dis, gan_model, dataset, latent_dims=args.gan_latent_dims, n_epochs=args.epochs,
-                      batch_size=args.batch_size, base_path=args.weights_path, test_name=args.name)
+                      batch_size=args.batch_size, base_path=args.weights_path, test_name=args.name, callbacks=callbacks)

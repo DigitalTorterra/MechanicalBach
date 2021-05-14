@@ -14,4 +14,5 @@ module load tensorflow
 # python training.py -m GAN -n gan_initial -b 8 -l binary_crossentropy --gan_dropout_prob 0.3
  # --lstm_embedding_size 64
 
-python generate.py -m GAN -b 8 -i 50 -w "./weights/gan_initial_gen.hdf5" -a "./weights/gan_initial.json"
+# python generate.py -m GAN -b 8 -i 50 -w "./weights/gan_initial_gen.hdf5" -a "./weights/gan_initial.json"
+python generate.py -m transformer -n trans_initial

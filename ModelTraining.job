@@ -11,5 +11,6 @@ module load python
 module load tensorflow
 
 # python training.py -m LSTM -n lstm_embed --lstm_dropout_prob 0.3
-python training.py -m GAN -n gan_initial -b 8 -l binary_crossentropy --gan_dropout_prob 0.3
+# python training.py -m GAN -n gan_initial -b 8 -l binary_crossentropy --gan_dropout_prob 0.3
+python training.py -m transformer -n trans_initial --transformer_dropout_prob 0.3
  # --lstm_embedding_size 64

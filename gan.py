@@ -41,6 +41,7 @@ def generate_latent_points(latent_dim, n_samples):
 
 
 def train_gan(generator, discriminator, gan, dataset,
+              callbacks = None,
               latent_dims: int = 100, n_epochs: int = 100,
               batch_size: int = 32, chkpt_dist: int = 100,
               base_path: str = None, test_name: str = None):
@@ -58,14 +59,14 @@ def train_gan(generator, discriminator, gan, dataset,
             X_dis, y_dis = np.vstack((X_real, X_fake)), np.vstack((y_real, y_fake))
 
             # Train discriminator
-            d_loss = discriminator.train_on_batch(X_dis, y_dis)
+            d_loss = discriminator.train_on_batch(X_dis, y_dis, callbacks=callbacks)
 
             # Generate data for generator
             X_gan = generate_latent_points(latent_dims, batch_size)
             y_gan = np.ones((batch_size, 1))
 
             # Train generator (with frozen generator)
-            g_loss = gan.train_on_batch(X_gan, y_gan)
+            g_loss = gan.train_on_batch(X_gan, y_gan, callbacks=callbacks)
 
             # Checkpoint
             if b % chkpt_dist == 0:
