@@ -63,5 +63,13 @@ Other Command Line Arguments (Hyperparameters):
 
 `python generate.py`
 
-### 
+#### Arguments 
+*   '-m', '--model_type', help=f'Model Type', choices=MODEL_LIST, required=True
+*   '-b', '--batch_size', help='Batch size', type=int, default=64
+*   '-d', '--data_mode', help=f'How to encode the MIDI data', choices=DATA_MODES, default='Numeric'
+*   '-s', '--seq_len', help='Length of input sequence to model', type=int, default=50
+*   '-p', '--data_path', help='Path to training data', default='./data/val.pkl'
+*   '-w', '--weights_path', help='Path to model weights', default='./weights/'
+*   '-a', '--hparam_path', help='Path to model hyperparams', default='./weights/'
+*   '-i', '--num_iterations', help='Number of iterations to run', type=int, default=500
 
