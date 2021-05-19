@@ -21,10 +21,10 @@ set EPOCHS=20
 set NUM_HIDDEN_DENSE_LAYERS=2
 
 # Variable Hyperparameters
-set TEST_NAME='lstm_6'
+set TEST_NAME='lstm_8'
 set DROPOUT_PROB=0.3
 set NUM_LSTM_LAYERS=3
-set SEQ_LEN=50
+set SEQ_LEN=100
 
 
 
