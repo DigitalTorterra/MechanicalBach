@@ -1,0 +1,47 @@
+#!/bin/csh
+#$ -M pfaley@nd.edu
+#$ -m abe
+#$ -q long
+#$ -pe smp 8
+#$ -q gpu@ta-titanv-001.crc.nd.edu
+#$ -l gpu_card=1
+#$ -N MechanicalBach
+
+module load python
+module load tensorflow
+
+# GAN Hyperparameters
+set OPTIMIZER='adam'
+set LOSS='binary_crossentropy'
+set BATCH_SIZE=8
+set DENSE_HIDDEN_SIZE=1000
+set START_CHANNELS=64
+set ACTIVATION='relu'
+set NUM_HIDDEN_CONV=256
+set DROPOUT_PROB=0.3
+set EPOCHS=20
+set NUM_DENSE_LAYERS=1
+
+# Variable Hyperparameters
+set TEST_NAME='gan_8'
+set LATENT_DIMS=200
+set NUM_CONV_LAYERS=3
+set SEQ_LEN=100
+
+
+# GAN Training
+python training.py -m GAN -n $TEST_NAME \
+    -b $BATCH_SIZE \
+    -l $LOSS \
+    -o $OPTIMIZER \
+    -e $EPOCHS \
+    -s $SEQ_LEN \
+    --gan_latent_dims $LATENT_DIMS \
+    --gan_num_dense_layers $NUM_DENSE_LAYERS \
+    --gan_dense_hidden_size $DENSE_HIDDEN_SIZE \
+    --gan_starting_num_channels $START_CHANNELS \
+    --gan_activation $ACTIVATION \
+    --gan_num_hidden_conv_layers $NUM_CONV_LAYERS \
+    --gan_hidden_conv_num_channels $NUM_HIDDEN_CONV \
+    --gan_dropout_prob $DROPOUT_PROB
+

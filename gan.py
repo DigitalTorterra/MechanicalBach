@@ -40,6 +40,7 @@ def generate_latent_points(latent_dim, n_samples):
     return np.random.normal(size=(n_samples, latent_dim))
 
 
+
 def train_gan(generator, discriminator, gan, dataset,
               callbacks = None,
               latent_dims: int = 100, n_epochs: int = 100,
@@ -59,14 +60,21 @@ def train_gan(generator, discriminator, gan, dataset,
             X_dis, y_dis = np.vstack((X_real, X_fake)), np.vstack((y_real, y_fake))
 
             # Train discriminator
-            d_loss = discriminator.train_on_batch(X_dis, y_dis, callbacks=callbacks)
+            d_loss = discriminator.train_on_batch(X_dis, y_dis)
 
             # Generate data for generator
             X_gan = generate_latent_points(latent_dims, batch_size)
             y_gan = np.ones((batch_size, 1))
 
             # Train generator (with frozen generator)
-            g_loss = gan.train_on_batch(X_gan, y_gan, callbacks=callbacks)
+            g_loss = gan.train_on_batch(X_gan, y_gan)
+
+            # Format data for log
+            batch_idx = e*num_batches+b
+            log_dict = {'gen_loss': g_loss, 'dis_loss': d_loss}
+            if callbacks != None:
+                for callback in callbacks:
+                    callback.on_train_batch_end(batch_idx, log_dict)
 
             # Checkpoint
             if b % chkpt_dist == 0:

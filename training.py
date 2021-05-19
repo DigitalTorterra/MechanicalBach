@@ -79,7 +79,11 @@ if __name__ == "__main__":
 
     # Initialize tensorboard
     if args.tensorboard_dir != None:
-        tensorboard = TensorBoard(log_dir=f'{args.tensorboard_dir}{args.name}', update_freq='batch')
+        update_freq = 'batch' if args.model_type != 'GAN' else None
+        tensorboard = TensorBoard(log_dir=f'{args.tensorboard_dir}{args.name}',
+                                  update_freq=update_freq,
+                                  profile_batch=0)
+        tensorboard._should_write_train_graph = False
 
     # Create model
     if args.model_type == 'LSTM':

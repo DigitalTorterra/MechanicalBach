@@ -1,0 +1,43 @@
+#!/bin/csh
+#$ -M pfaley@nd.edu
+#$ -m abe
+#$ -q long
+#$ -pe smp 8
+#$ -q gpu@ta-titanv-001.crc.nd.edu
+#$ -l gpu_card=1
+#$ -N MechanicalBach
+
+module load python
+module load tensorflow
+
+# GAN Hyperparameters
+set OPTIMIZER='adam'
+set LOSS='sparse_categorical_crossentropy'
+set BATCH_SIZE=128
+set LSTM_LAYER_SIZE=256
+set DENSE_HIDDEN_SIZE=256
+set ACTIVATION='relu'
+set EPOCHS=20
+set NUM_HIDDEN_DENSE_LAYERS=2
+
+# Variable Hyperparameters
+set TEST_NAME='lstm_6'
+set DROPOUT_PROB=0.3
+set NUM_LSTM_LAYERS=3
+set SEQ_LEN=50
+
+
+
+# GAN Training
+python training.py -m LSTM -n $TEST_NAME \
+    -b $BATCH_SIZE \
+    -l $LOSS \
+    -o $OPTIMIZER \
+    -e $EPOCHS \
+    -s $SEQ_LEN \
+    --lstm_size $LSTM_LAYER_SIZE \
+    --lstm_num_layers $NUM_LSTM_LAYERS \
+    --lstm_dropout_prob $DROPOUT_PROB \
+    --lstm_num_hidden_dense $NUM_HIDDEN_DENSE_LAYERS \
+    --lstm_hidden_dense_size $DENSE_HIDDEN_SIZE \
+    --lstm_hidden_dense_activation $ACTIVATION
