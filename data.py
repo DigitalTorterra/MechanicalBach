@@ -121,39 +121,11 @@ class MIDIOnehotDataset(MIDINumericDataset):
         """
         This function constructs the dataset
         """
-        # Fit the one-hot encoder
-        encoder = OneHotEncoder()
-        encoder.fit([[note] for note in notes])
-    # def construct_data(self):
-    #     """
-    #     This function constructs the data by embedding it into a
-    #     one-hot encoding
-    #     """
-    #     # Initialize outputs
-    #     network_input  = []
-    #     network_output = []
+        network_input = [self.note_to_int[n] for n in self.notes]
+        network_input = to_categorical(network_input, num_classes=self.n_vocab, dtype=np.float32)
 
-    #     # Create one-hot encoding of notes
-    #     encoder = OneHotEncoder()
-    #     self.one_hot_notes = encoder.fit_transform([[note] for note in self.notes])
+        return network_input, []
 
-    #     # Create sequences
-    #     for i in range(len(self.notes) - self.sequence_len):
-    #         # Isolate the correct range
-    #         sequence_in  = self.one_hot_notes[i:i + self.sequence_len]
-    #         sequence_out = self.one_hot_notes[i + self.sequence_len]
-
-    #         # Add to output
-    #         network_input.append(sequence_in)
-    #         network_output.append(sequence_out)
-
-    #     # Resize data
-    #     n_patterns = len(network_input)
-    #     network_input = np.reshape(network_input, (n_patterns, self.sequence_len, -1))
-
-    #     # Transform output
-    #     network_output = np.array(network_output)
-
-    #     return network_input, network_output
-
-# ds = MIDIOnehotDataset('./data/val.pkl', 2)
+    def get_idx(self, idx: int):
+        # Returns a sequence starting from idx
+        return self.network_input[idx:idx+self.sequence_len]

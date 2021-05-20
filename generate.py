@@ -8,9 +8,11 @@ from music21 import converter, note, chord, instrument, stream
 # Internal imports
 import data
 import models
+import gan
+
 
 # Constants
-MODEL_LIST = ['LSTM']
+MODEL_LIST = ['LSTM', 'transformer', 'GAN']
 DATA_MODES = ['Numeric']
 
 if __name__ == "__main__":
@@ -19,95 +21,91 @@ if __name__ == "__main__":
 
     # General arguments
     parser.add_argument('-m', '--model_type', help=f'Model Type', choices=MODEL_LIST, required=True)
-    parser.add_argument('-n', '--name', help='Experiment name', required=True)
-    parser.add_argument('-l', '--loss_function', help='Loss function to use', default='sparse_categorical_crossentropy')
-    parser.add_argument('-o', '--optimizer', help='Optimizer to use', default='rmsprop')
     parser.add_argument('-b', '--batch_size', help='Batch size', type=int, default=64)
-    parser.add_argument('-e', '--epochs', help='Number of epochs', type=int, default=200)
     parser.add_argument('-d', '--data_mode', help=f'How to encode the MIDI data', choices=DATA_MODES, default='Numeric')
     parser.add_argument('-s', '--seq_len', help='Length of input sequence to model', type=int, default=50)
     parser.add_argument('-p', '--data_path', help='Path to training data', default='./data/val.pkl')
-    parser.add_argument('-w', '--weights_path', help='Path to directory to store weights', default='./weights/')
-
-    # LSTM-Specific Arguments
-    parser.add_argument('--lstm_size', help='Size of LSTM layers', type=int, default=512)
-    parser.add_argument('--lstm_num_layers', help='Number of LSTM layers', type=int, default=3)
-    parser.add_argument('--lstm_dropout_prob', help='LSTM dropout probability', type=float)
-    parser.add_argument('--lstm_num_hidden_dense', help='Number of hidden dense layers', type=int, default=1)
-    parser.add_argument('--lstm_hidden_dense_size', help='Size of hidden denses layers', type=int, default=256)
-    parser.add_argument('--lstm_hidden_dense_activation', help='Activation for hidden dense layers', default='relu')
+    parser.add_argument('-w', '--weights_path', help='Path to model weights', default='./weights/')
+    parser.add_argument('-a', '--hparam_path', help='Path to model hyperparams', default='./weights/')
+    parser.add_argument('-i', '--num_iterations', help='Number of iterations to run', type=int, default=500)
 
     # Parse arguments
     args = parser.parse_args()
-
 
     # Initialize dataset
     if args.data_mode == 'Numeric':
         dataset = data.MIDINumericDataset(path=args.data_path, sequence_len=args.seq_len)
         out_shape = 1
+        int_to_note = dict((number, note) for number, note in enumerate(dataset.pitchnames))
 
 
-    # Preprocess data
-    network_input, network_output = dataset.get_data()
+    # Load model hyperparameters
+    with open(args.hparam_path, 'r') as f:
+        model_hparams = json.load(f)
+
 
     # Create model
-    model_path = './weights/lstm_initial_args.json'
-    
-    with open(model_path, 'r') as f:
-        model_hparams = json.load(f)
-    if args.model_type == 'LSTM':
-        model, _ = models.load_from_dict(model_hparams)
-        # mo
-        # model = models.create_lstm(network_input[0].shape,
-        #                            out_shape,
-        #                            lstm_size = args.lstm_size,
-        #                            num_lstm_layers = args.lstm_num_layers,
-        #                            dropout_prob = args.lstm_dropout_prob,
-        #                            num_hidden_dense = args.lstm_num_hidden_dense,
-        #                            hidden_dense_size = args.lstm_hidden_dense_size,
-        #                            hidden_dense_activation = args.lstm_hidden_dense_activation,
-        #                            loss_function = args.loss_function,
-        #                            optimizer = args.optimizer)
-    
-    elif args.model_type == 'transformer':
-        model, _ = models.load_from_dict(model_hparams)
+    model, *_ = models.load_from_dict(model_hparams)
 
+    with open('hi3.txt', 'w') as f:
+        f.write('bye')
 
     # Load weights
-    filepath = './weights/lstm_initial-01-4.8798.hdf5'
+    filepath = args.weights_path
     model.load_weights(filepath)
 
-    # Choose a starting point
-    start = np.random.randint(0, len(network_input)-1)
 
-    int_to_note = dict((number, note) for number, note in enumerate(dataset.pitchnames))
-    pattern = network_input[start]
+    if args.model_type != 'GAN':
 
-    prediction_output = []
 
-    nNotes = 500 # about 2 min
-    # generate notes
-    for note_index in range(nNotes):
-        # Prepare prediction inputs
-        prediction_input = np.reshape(pattern, (1, len(pattern), 1))
-        prediction_input = prediction_input / float(dataset.n_vocab)
+        # Preprocess data
+        network_input, network_output = dataset.get_data()
 
-        # Get prediction
-        prediction = model.predict(prediction_input, verbose=0)
+        # Choose a starting point
+        start = np.random.randint(0, len(network_input)-1)
 
-        # Randomly sample from prediction vector
-        p = prediction.squeeze()
-        print(f'Prediction: {prediction.shape}')
-        print(f'p: {p.shape}')
-        print(f'n_vocab: {dataset.n_vocab}')
-        index = int(np.random.choice(dataset.n_vocab, 1, p=p/p.sum()))
+        pattern = network_input[start]
 
-        # Convert prediction to note
-        result = int_to_note[index]
-        prediction_output.append(result)
-        pattern = np.append(pattern, index)
-        pattern = pattern[1:len(pattern)]
+        prediction_output = []
 
+        nNotes = 500 # about 2 min
+        # generate notes
+        for note_index in range(nNotes):
+            # Prepare prediction inputs
+            prediction_input = np.reshape(pattern, (1, len(pattern), 1))
+            prediction_input = prediction_input / float(dataset.n_vocab)
+
+            # Get prediction
+            prediction = model.predict(prediction_input, verbose=0)
+
+            # Randomly sample from prediction vector
+            p = prediction.squeeze()
+            print(f'Prediction: {prediction.shape}')
+            print(f'p: {p.shape}')
+            print(f'n_vocab: {dataset.n_vocab}')
+            index = int(np.random.choice(dataset.n_vocab, 1, p=p/p.sum()))
+
+            # Convert prediction to note
+            result = int_to_note[index]
+            prediction_output.append(result)
+            pattern = np.append(pattern, index)
+            pattern = pattern[1:len(pattern)]
+
+    else:
+        print('Generating note')
+        notes,_ = gan.generate_fake_samples(model, model_hparams['latent_dim'], args.num_iterations)
+        predictions = np.reshape(notes, (-1, notes.shape[-2]))
+        prediction_output = []
+
+        for prediction in predictions:
+            if prediction.sum() == 0:
+                prediction += 1
+            index = int(np.random.choice(dataset.n_vocab, 1, p=prediction/prediction.sum()))
+
+            # Convert prediction to note
+            result = int_to_note[index]
+            prediction_output.append(result)
+        
 
     # turn predictions into notes
 
@@ -137,3 +135,4 @@ if __name__ == "__main__":
 
     midi_stream = stream.Stream(output_notes)
     midi_stream.write('midi', fp='test_output.mid')
+

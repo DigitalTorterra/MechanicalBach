@@ -3,8 +3,9 @@ import tensorflow as tf
 from tensorflow import keras
 from typing import Tuple
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, LSTM, Dropout, Embedding
+from tensorflow.keras.layers import Dense, LSTM, Dropout, Embedding, Reshape, Conv2DTranspose, Conv2D, Flatten
 from tensorflow.keras import layers
+from utils import get_starting_size
 
 # Defining layers for Transformer
 class TransformerBlock(layers.Layer):
@@ -53,6 +54,8 @@ def load_from_dict(in_dict):
         return create_lstm(**in_dict)
     elif model_type == 'transformer':
         return create_transformer(**in_dict)
+    elif model_type == 'gan':
+        return create_gan(**in_dict)
 
 
 
@@ -96,7 +99,7 @@ def create_lstm(input_shape: Tuple[int, int] = (100, 1),
         model.add(LSTM(lstm_size, return_sequences=True))
     else:
         # Add initial LSTM layer
-        model.add(LSTM(lstm_size, input_shape=input_shape, return_sequences=True))
+        model.add(LSTM(lstm_size, input_shape=input_shape, return_sequences=(num_lstm_layers != 1)))
 
     # Add subsequent LSTM layers and dropout if necessary
     for i in range(num_lstm_layers-1):
@@ -147,7 +150,7 @@ def create_transformer(input_length: int,
         'loss_function': loss_function,
         'optimizer': optimizer,
     }
-    
+
     inputs = layers.Input(shape=(input_length,))
     embedding_layer = TokenAndPositionEmbedding(input_length, n_vocab, embed_dim)
     x = embedding_layer(inputs)
@@ -159,7 +162,7 @@ def create_transformer(input_length: int,
     for _ in range(num_hidden_dense):
         if dropout_prob != None:
             x = layers.Dropout(dropout_prob)(x)
-        
+
         x = layers.Dense(hidden_dense_size, activation=hidden_dense_activation)(x)
 
     # add final layer
@@ -170,3 +173,98 @@ def create_transformer(input_length: int,
     model.compile(optimizer=optimizer, loss=loss_function)
 
     return model, args
+
+def create_gan(latent_dim: int = 100,
+               num_dense_layers: int = 1,
+               dense_hidden_size: int = 1000,
+               starting_num_channels: int = 128,
+               activation: str = 'relu',
+               num_hidden_conv_layers: int = 3,
+               hidden_conv_num_channels: int = 256,
+               n_vocab: int = 100,
+               input_length: int = 100,
+               disc_drop_prob: float = None,
+               loss_function: str = 'binary_crossentropy',
+               optimizer: str = 'rmsprop'):
+    """
+    "Image" size: (input_length, n_vocab, 1)
+    """
+    args = {
+        'model_type': 'gan',
+        'latent_dim': latent_dim,
+        'num_dense_layers': num_dense_layers,
+        'dense_hidden_size': dense_hidden_size,
+        'starting_num_channels': starting_num_channels,
+        'activation': activation,
+        'num_hidden_conv_layers': num_hidden_conv_layers,
+        'hidden_conv_num_channels': hidden_conv_num_channels,
+        'n_vocab': n_vocab,
+        'input_length': input_length,
+        'disc_drop_prob': disc_drop_prob,
+        'loss_function': loss_function,
+        'optimizer': optimizer,
+    }
+
+    # Calculate starting size
+    starting_image_size, num_doublings = get_starting_size(num_hidden_conv_layers, n_vocab, input_length)
+
+    # Initialize generator
+    generator = Sequential()
+
+    # Add dense layers
+    for i in range(num_dense_layers):
+        out_size = starting_image_size[0]*starting_image_size[1]*starting_num_channels if i + 1 == num_dense_layers else dense_hidden_size
+        if i == 0:
+            generator.add(Dense(out_size, input_dim=latent_dim, activation=activation))
+        else:
+            generator.add(Dense(out_size, activation=activation))
+
+    # Add reshape layer
+    generator.add(Reshape((*starting_image_size, starting_num_channels)))
+
+    # Add intermediate convolutional layers
+    for i in range(num_hidden_conv_layers):
+        if i < num_doublings:
+            generator.add(Conv2DTranspose(hidden_conv_num_channels, (4, 4), strides=(2,2), padding='same', activation=activation))
+        else:
+            generator.add(Conv2DTranspose(hidden_conv_num_channels, (2, 2), strides=(1,1), padding='same', activation=activation))
+
+    # Add final convolutional layer
+    generator.add(Conv2D(1, (3, 3), activation='sigmoid', padding='same'))
+    generator.compile(loss=loss_function, optimizer=optimizer)
+
+    # Initialize discriminator
+    discriminator = Sequential()
+
+    # Add convolutional layers
+    for i in range(num_hidden_conv_layers+1):
+        if i == 0:
+            discriminator.add(Conv2D(hidden_conv_num_channels, (3, 3), padding='same', input_shape=(input_length, n_vocab, 1)))
+        else:
+            discriminator.add(Conv2D(hidden_conv_num_channels, (3, 3), padding='same', activation=activation))
+        if disc_drop_prob != None:
+            discriminator.add(Dropout(disc_drop_prob))
+
+    # Add the flattening
+    discriminator.add(Flatten())
+
+    # Add dense layers
+    for i in range(num_dense_layers):
+        if i + 1 == num_dense_layers:
+            discriminator.add(Dense(1, activation='sigmoid'))
+        else:
+            discriminator.add(Dense(dense_hidden_size, activation=activation))
+            if disc_drop_prob != None:
+                discriminator.add(Dropout(disc_drop_prob))
+
+    discriminator.compile(loss=loss_function, optimizer=optimizer)
+
+    # Create combined model
+    discriminator.trainable = False
+    gan = Sequential()
+    gan.add(generator)
+    gan.add(discriminator)
+    gan.compile(loss=loss_function, optimizer=optimizer)
+    discriminator.trainable = True
+
+    return generator, discriminator, gan, args
