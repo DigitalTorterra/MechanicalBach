@@ -2,8 +2,7 @@
 import argparse
 import json
 import numpy as np
-from tensorflow.keras.callbacks import ModelCheckpoint
-from music21 import converter, note, chord, instrument, stream
+from music21 import note, chord, instrument, stream
 
 # Internal imports
 import data
@@ -79,10 +78,6 @@ if __name__ == "__main__":
             prediction = model.predict(prediction_input, verbose=0)
 
             # Randomly sample from prediction vector
-            p = prediction.squeeze()
-            print(f'Prediction: {prediction.shape}')
-            print(f'p: {p.shape}')
-            print(f'n_vocab: {dataset.n_vocab}')
             index = int(np.random.choice(dataset.n_vocab, 1, p=p/p.sum()))
 
             # Convert prediction to note
@@ -92,7 +87,6 @@ if __name__ == "__main__":
             pattern = pattern[1:len(pattern)]
 
     else:
-        print('Generating note')
         notes,_ = gan.generate_fake_samples(model, model_hparams['latent_dim'], args.num_iterations)
         predictions = np.reshape(notes, (-1, notes.shape[-2]))
         prediction_output = []
@@ -134,5 +128,5 @@ if __name__ == "__main__":
         offset += 0.5
 
     midi_stream = stream.Stream(output_notes)
-    midi_stream.write('midi', fp='test_output.mid')
+    midi_stream.write('midi', fp='output.mid')
 

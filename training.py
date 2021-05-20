@@ -102,7 +102,6 @@ if __name__ == "__main__":
             embedding_out_size = None
             embedding_seq_len = None
 
-        print('c')
 
         model, hparams = models.create_lstm(input_shape = in_shape,
                                             out_size = n_vocab,
@@ -117,7 +116,7 @@ if __name__ == "__main__":
                                             hidden_dense_activation = args.lstm_hidden_dense_activation,
                                             loss_function = args.loss_function,
                                             optimizer = args.optimizer)
-        print('d')
+
         
         # Setup training checkpoints
         filepath = f'{args.weights_path}{args.name}.hdf5'
@@ -136,9 +135,6 @@ if __name__ == "__main__":
         with open(hparam_path, 'w') as f:
             json.dump(hparams, f)
 
-        print(model.summary())
-
-        print('e')
 
         # Train the model
         model.fit(network_input, network_output, epochs=args.epochs, batch_size=args.batch_size, callbacks=callbacks_list)
@@ -190,7 +186,7 @@ if __name__ == "__main__":
         hparam_path = f'{args.weights_path}{args.name}.json'
         with open(hparam_path, 'w') as f:
             json.dump(hparams, f)
-        #
+
         # Load tensorboard
         callbacks = [tensorboard] if args.tensorboard_dir != None else None
 

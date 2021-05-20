@@ -1,7 +1,6 @@
 # External libraries
 import pickle as pkl
 import numpy as np
-from sklearn.preprocessing import OneHotEncoder
 from tensorflow.keras.utils import to_categorical
 
 
